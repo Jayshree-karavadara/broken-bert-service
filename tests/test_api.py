@@ -23,7 +23,7 @@ class TestAPIWithRequests:
     @pytest.fixture(scope="class")
     def api_url(self):
         """Base URL for the API."""
-        return "http://127.0.0.1:8000"
+        return "http://127.0.0.1:8080"
     
     def test_server_is_running(self, api_url):
         """Test if the server is running (manual test)."""
@@ -74,6 +74,64 @@ class TestAPIWithRequests:
             assert "confidence" in data
             assert data["label"] in ["positive", "negative"]
             assert 0.0 <= data["confidence"] <= 1.0
+            # This should be positive based on our fixed label mapping
+            assert data["label"] == "positive", f"Expected positive but got {data['label']}"
+        except requests.exceptions.ConnectionError:
+            pytest.skip("Server is not running")
+    
+    def test_predict_endpoint_negative_sentiment(self, api_url):
+        """Test the predict endpoint with negative sentiment."""
+        try:
+            test_data = {
+                "text": "This movie was terrible and boring, waste of time."
+            }
+            response = requests.post(f"{api_url}/predict", json=test_data, timeout=10)
+            
+            if response.status_code == 503:
+                pytest.skip("Model not loaded. Run: python -m ml.train")
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert "label" in data
+            assert "confidence" in data
+            # This should be negative based on our fixed label mapping
+            assert data["label"] == "negative", f"Expected negative but got {data['label']}"
+            assert 0.0 <= data["confidence"] <= 1.0
+        except requests.exceptions.ConnectionError:
+            pytest.skip("Server is not running")
+    
+    def test_predict_batch_endpoint(self, api_url):
+        """Test the batch predict endpoint."""
+        try:
+            test_data = {
+                "texts": [
+                    "Great movie!",
+                    "Terrible film.",
+                    "Amazing cinematography!"
+                ]
+            }
+            response = requests.post(f"{api_url}/predict/batch", json=test_data, timeout=15)
+            
+            if response.status_code == 503:
+                pytest.skip("Model not loaded. Run: python -m ml.train")
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert "predictions" in data
+            assert len(data["predictions"]) == 3
+            
+            for prediction in data["predictions"]:
+                assert "label" in prediction
+                assert "confidence" in prediction
+                assert prediction["label"] in ["positive", "negative"]
+                assert 0.0 <= prediction["confidence"] <= 1.0
+            
+            # Test specific label mappings
+            predictions = data["predictions"]
+            assert predictions[0]["label"] == "positive"  # Great movie!
+            assert predictions[1]["label"] == "negative"  # Terrible film.
+            assert predictions[2]["label"] == "positive"  # Amazing cinematography!
+            
         except requests.exceptions.ConnectionError:
             pytest.skip("Server is not running")
     
@@ -146,7 +204,7 @@ class TestRecommendationAPI:
     @pytest.fixture(scope="class")
     def api_url(self):
         """Base URL for the API."""
-        return "http://127.0.0.1:8000"
+        return "http://127.0.0.1:8080"
     
     def test_vector_store_info(self, api_url):
         """Test vector store information endpoint."""
@@ -222,7 +280,7 @@ class TestAPIDocumentation:
     def test_openapi_schema(self):
         """Test OpenAPI schema availability."""
         try:
-            response = requests.get("http://127.0.0.1:8000/openapi.json", timeout=5)
+            response = requests.get("http://127.0.0.1:8080/openapi.json", timeout=5)
             assert response.status_code == 200
             data = response.json()
             assert "openapi" in data
@@ -234,7 +292,7 @@ class TestAPIDocumentation:
     def test_swagger_ui(self):
         """Test Swagger UI availability."""
         try:
-            response = requests.get("http://127.0.0.1:8000/docs", timeout=5)
+            response = requests.get("http://127.0.0.1:8080/docs", timeout=5)
             assert response.status_code == 200
             assert "swagger" in response.text.lower()
             print("✓ Swagger UI available")
@@ -244,7 +302,7 @@ class TestAPIDocumentation:
     def test_redoc(self):
         """Test ReDoc availability."""
         try:
-            response = requests.get("http://127.0.0.1:8000/redoc", timeout=5)
+            response = requests.get("http://127.0.0.1:8080/redoc", timeout=5)
             assert response.status_code == 200
             assert "redoc" in response.text.lower()
             print("✓ ReDoc available")

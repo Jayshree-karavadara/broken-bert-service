@@ -152,7 +152,7 @@ class BertTrainer:
 def train_model(csv_path: str = 'assets/reviews.csv',
                model_save_path: str = 'assets/model.pth',
                tokenizer_save_path: str = 'assets/tokenizer/',
-               epochs: int = 2,
+               epochs: int = 10,
                batch_size: int = 16,
                learning_rate: float = 2e-5,
                max_length: int = 128) -> Dict[str, Any]:
@@ -261,8 +261,8 @@ def main():
                         help='Path to save the trained model (default: assets/model.pth)')
     parser.add_argument('--tokenizer_path', type=str, default='assets/tokenizer/',
                         help='Path to save the tokenizer (default: assets/tokenizer/)')
-    parser.add_argument('--epochs', type=int, default=2,
-                        help='Number of training epochs (default: 2)')
+    parser.add_argument('--epochs', type=int, default=10,
+                        help='Number of training epochs (default: 10)')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size for training (default: 16)')
     parser.add_argument('--learning_rate', type=float, default=2e-5,

@@ -77,7 +77,7 @@ class ReviewClassifier:
             raise RuntimeError(f"Failed to load model: {str(e)}")
         
         # Define label mapping
-        self.label_map = {1: 'negative', 0: 'positive'}
+        self.label_map = {0: 'negative', 1: 'positive'}
         
     def predict(self, text: str, max_length: int = 128) -> Tuple[str, float]:
         """
@@ -114,6 +114,7 @@ class ReviewClassifier:
         input_ids = encoding['input_ids'].to(self.device)
         attention_mask = encoding['attention_mask'].to(self.device)
         
+        with torch.no_grad():
             outputs = self.model(input_ids, attention_mask)
             
             # Apply softmax to get probabilities

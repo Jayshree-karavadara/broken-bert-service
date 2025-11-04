@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI):
     
     try:
         # Load the model during startup
-        model_path = "accets/model.pth"
-        tokenizer_path = "accets/tokenizer/"
+        model_path = "assets/model.pth"
+        tokenizer_path = "assets/tokenizer/"
         
         if not os.path.exists(model_path):
             logger.error(f"Model file not found: {model_path}")
